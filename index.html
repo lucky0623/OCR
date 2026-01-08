@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini 3 全能 AI 導師 (協作增強版)</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      options: { ignoreHtmlClass: 'tex2jax_ignore', processHtmlClass: 'tex2jax_process' }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #8e44ad;
+            --bg: #fdfbf7;
+            --surface: #ffffff;
+            --border: #dcdcdc;
+            --sidebar-width: 350px;
+        }
+
+        body {
+            font-family: 'Noto Serif TC', 'Songti TC', serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden; /* 防止雙重捲軸 */
+        }
+
+        /* --- 主內容區 --- */
+        .main-wrapper {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            transition: margin-right 0.3s ease;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid #e0e0e0;
+        }
+
+        h1 { margin: 0 0 10px 0; font-weight: 700; letter-spacing: 2px; font-size: 2em; text-align: center; }
+        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 25px; font-family: sans-serif; }
+
+        /* --- 1. 極簡化上傳區 --- */
+        .toolbar-top {
+            display: flex; gap: 15px; align-items: center; margin-bottom: 20px;
+            background: #f8f9fa; padding: 10px 20px; border-radius: 6px; border: 1px solid #eee;
+        }
+        
+        .upload-btn-mini {
+            display: flex; align-items: center; gap: 8px;
+            background: #fff; border: 1px solid #ccc; padding: 8px 15px;
+            border-radius: 4px; cursor: pointer; font-weight: bold; font-family: sans-serif;
+            transition: all 0.2s;
+        }
+        .upload-btn-mini:hover { border-color: var(--accent); color: var(--accent); }
+
+        .settings-row { display: flex; gap: 15px; flex: 1; }
+        select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-weight: 700; flex: 1; }
+        
+        /* --- 2. 第二指令欄位 --- */
+        .instruction-box {
+            margin: 20px 0;
+            border: 2px solid var(--accent);
+            border-radius: 6px;
+            background: #fff;
+            padding: 15px;
+            position: relative;
+        }
+        .instruction-label {
+            position: absolute; top: -12px; left: 15px;
+            background: var(--accent); color: white;
+            padding: 2px 10px; font-size: 0.85em; border-radius: 4px;
+            font-weight: bold; font-family: sans-serif;
+        }
+        .instruction-input {
+            width: 100%; border: none; outline: none;
+            font-size: 1.1em; font-family: sans-serif; resize: none;
+            min-height: 40px; color: #333;
+        }
+        
+        /* 預覽與狀態 */
+        #preview-box { display: none; margin: 10px 0; text-align: center; }
+        #preview-img { max-height: 120px; border-radius: 4px; border: 1px solid #eee; }
+        .status-text { text-align: center; font-weight: bold; color: #666; margin: 10px 0; min-height: 20px; font-family: sans-serif; }
+
+        /* 雙欄區 */
+        .split-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 600px; }
+        .panel { 
+            border: 1px solid var(--border); border-radius: 6px; display: flex; flex-direction: column; 
+            background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .panel-header {
+            padding: 10px 15px; background: #fcfcfc; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; font-family: sans-serif;
+        }
+        .panel-title { font-weight: bold; font-size: 1em; color: #444; }
+        .editor {
+            flex: 1; padding: 25px; overflow-y: auto; outline: none;
+            font-size: 19px; line-height: 1.8; color: #2c3e50;
+        }
+
+        /* 視覺樣式 */
+        .editor h3 { color: var(--accent); font-size: 1.2em; border-bottom: 1px solid #eee; margin-top: 25px; font-weight: 700; }
+        .editor h3::before { content: '✦ '; }
+        .editor blockquote { border-left: 4px solid var(--accent); background: #f9f9f9; padding: 15px; margin: 15px 0; font-style: normal; }
+        .editor strong { color: #c0392b; font-weight: 700; }
+
+        /* 按鈕 */
+        .btn-big {
+            width: 100%; padding: 12px; background: var(--accent); color: white; border: none;
+            border-radius: 4px; font-size: 1.1em; font-weight: bold; cursor: pointer;
+            margin-top: 10px; font-family: sans-serif;
+        }
+        .btn-big:hover { opacity: 0.9; }
+
+        /* --- 3. AI 側邊欄 (Sidebar) --- */
+        .sidebar {
+            position: fixed; top: 0; right: -360px; /* 預設隱藏 */
+            width: var(--sidebar-width); height: 100%;
+            background: #fff; border-left: 1px solid #ddd;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column;
+            transition: right 0.3s ease;
+            z-index: 1000;
+        }
+        .sidebar.open { right: 0; }
+        
+        .sidebar-header {
+            padding: 15px; background: var(--accent); color: white; font-weight: bold;
+            display: flex; justify-content: space-between; align-items: center; font-family: sans-serif;
+        }
+        .chat-area {
+            flex: 1; padding: 15px; overflow-y: auto; background: #f4f6f7;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .chat-input-area {
+            padding: 15px; border-top: 1px solid #eee; background: #fff; display: flex; gap: 10px;
+        }
+        .chat-input {
+            flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; font-family: sans-serif;
+        }
+        .chat-send-btn {
+            background: var(--accent); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer;
+        }
+
+        /* 聊天氣泡 */
+        .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.95em; line-height: 1.5; font-family: sans-serif; }
+        .msg-ai { align-self: flex-start; background: #fff; border: 1px solid #e0e0e0; color: #333; }
+        .msg-user { align-self: flex-end; background: var(--accent); color: white; }
+        
+        /* 側邊欄開關按鈕 */
+        .sidebar-toggle {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px; border-radius: 50%;
+            background: var(--accent); color: white;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 30px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1001; transition: transform 0.2s;
+        }
+        .sidebar-toggle:hover { transform: scale(1.1); }
+
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper" id="main-wrapper">
+    <div class="container">
+        <h1>Gemini 3 全能 AI 導師</h1>
+        <div class="subtitle">協作模式：上傳 ➔ 指令微調 ➔ 專家解析 ➔ 助手討論</div>
+
+        <div class="toolbar-top">
+            <label class="upload-btn-mini">
+                <span>📁 上傳圖片</span>
+                <input type="file" id="file-input" accept="image/*" style="display:none">
+            </label>
+            
+            <div class="settings-row">
+                <select id="role-select" onchange="updateRoleUI()">
+                    <option value="translator">📝 筆譯專家</option>
+                    <option value="interpreter">🗣️ 口譯專家</option>
+                    <option value="math">📐 數學家教</option>
+                    <option value="toefl">🎓 TOEFL 老師</option>
+                    <option value="psych">🧠 心理學教授</option>
+                    <option value="coder">💻 程式導師</option>
+                </select>
+                <select id="target-lang">
+                    <option value="Traditional Chinese (Taiwan)">繁體中文 (台灣)</option>
+                    <option value="English">English</option>
+                    <option value="Japanese">Japanese</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="preview-box"><img id="preview-img"></div>
+
+        <div class="instruction-box">
+            <div class="instruction-label">✨ 第二指令 (對專家的額外要求)</div>
+            <textarea id="user-instruction" class="instruction-input" placeholder="例如：請用更幽默的語氣、請把這段翻譯成台語、請解釋這公式的歷史背景..." rows="1"></textarea>
+        </div>
+
+        <button id="btn-run" class="btn-big" onclick="startAIAnalysis()">開始專家分析</button>
+        <div id="status-text" class="status-text"></div>
+
+        <div class="split-container">
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">原始內容</span>
+                    <button onclick="document.getElementById('input-editor').focus()" style="border:none;background:none;cursor:pointer;">✎</button>
+                </div>
+                <div id="input-editor" class="editor tex2jax_process" contenteditable="true"></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title" id="expert-title">專家輸出</span>
+                    <button onclick="copyContent('output-editor')" style="border:none;background:none;cursor:pointer;">📋</button>
+                </div>
+                <div id="output-editor" class="editor tex2jax_process" contenteditable="true"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <span>🤖 AI 協作助手</span>
+        <span onclick="toggleSidebar()" style="cursor:pointer;">✕</span>
+    </div>
+    <div class="chat-area" id="chat-area">
+        <div class="msg msg-ai">你好！我是你的協作助手。我已經讀過左邊的內容和右邊的專家回答了。有什麼想討論的嗎？</div>
+    </div>
+    <div class="chat-input-area">
+        <input type="text" id="chat-input" class="chat-input" placeholder="問問小助手..." onkeypress="if(event.key==='Enter') sendChat()">
+        <button class="chat-send-btn" onclick="sendChat()">➤</button>
+    </div>
+</div>
+
+<div class="sidebar-toggle" onclick="toggleSidebar()">💬</div>
+
+<script>
+    // ==========================================
+    const MY_API_KEY = "AIzaSyARnOyCalravUFD_FuZoVtZAFOmG5hLLSQ"; 
+    // ==========================================
+
+    // --- 角色定義 (支援第二指令) ---
+    const ROLES = {
+        translator: {
+            title: "筆譯專家", color: "#27ae60",
+            prompt: (content, lang, instruction) => `
+                你是一位資深筆譯。母語：${lang}。
+                來源內容: "${content}"
+                
+                **使用者額外指令**: "${instruction || '無'}" (請務必優先遵守此指令)
+
+                請以 Markdown 回應：
+                ### 專家視角
+                > (分析原文與使用者指令，說明策略)
+                ### 譯文產出
+                (高品質翻譯)
+                ### 譯註
+            `
+        },
+        interpreter: {
+            title: "口譯專家", color: "#16a085",
+            prompt: (content, lang, instruction) => `
+                你是一位同步口譯員。母語：${lang}。
+                來源: "${content}"
+                **使用者指令**: "${instruction || '無'}"
+                
+                請以 Markdown 回應：
+                ### 口譯筆記
+                > (分析語氣、速度與策略)
+                ### 口語輸出
+                (模擬現場口譯)
+            `
+        },
+        math: {
+            title: "數學家教", color: "#e67e22",
+            prompt: (content, lang, instruction) => `
+                Math Tutor (${lang}). Problem: "${content}"
+                **User Instruction**: "${instruction || 'None'}"
+                
+                Markdown Response:
+                ### Insight
+                > (Geeky analysis)
+                ### Solution
+                (LaTeX steps)
+            `
+        },
+        toefl: { title: "TOEFL 老師", color: "#c0392b", prompt: (c, l, i) => `TOEFL Expert (${l}). Input: "${c}". **Instruction**: "${i}". Provide critique and rewrite.` },
+        psych: { title: "心理學教授", color: "#8e44ad", prompt: (c, l, i) => `Psychology Prof (${l}). Input: "${c}". **Instruction**: "${i}". Analyze deeply.` },
+        coder: { title: "程式導師", color: "#2980b9", prompt: (c, l, i) => `Senior Dev (${l}). Input: "${c}". **Instruction**: "${i}". Review and fix.` }
+    };
+
+    // DOM Elements
+    const roleSelect = document.getElementById('role-select');
+    const inputEditor = document.getElementById('input-editor');
+    const outputEditor = document.getElementById('output-editor');
+    const userInstruction = document.getElementById('user-instruction');
+    const statusText = document.getElementById('status-text');
+    const btnRun = document.getElementById('btn-run');
+    const fileInput = document.getElementById('file-input');
+    const previewBox = document.getElementById('preview-box');
+    const previewImg = document.getElementById('preview-img');
+    const sidebar = document.getElementById('sidebar');
+    const chatArea = document.getElementById('chat-area');
+    const chatInput = document.getElementById('chat-input');
+
+    let currentFileBase64 = null;
+    let currentFileType = null;
+
+    // --- UI Logic ---
+    function updateRoleUI() {
+        const role = ROLES[roleSelect.value];
+        document.documentElement.style.setProperty('--accent', role.color);
+        document.getElementById('expert-title').innerText = role.title + " 輸出";
+    }
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
+        const main = document.getElementById('main-wrapper');
+        main.style.marginRight = sidebar.classList.contains('open') ? '350px' : '0';
+    }
+
+    // --- File Handling ---
+    fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+    document.addEventListener('paste', e => {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let item of items) { if (item.kind === 'file') handleFile(item.getAsFile()); }
+    });
+
+    function handleFile(file) {
+        if(!file) return;
+        previewImg.src = URL.createObjectURL(file);
+        previewBox.style.display = 'block';
+        statusText.innerText = "讀取中...";
+        
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            currentFileBase64 = reader.result.split(',')[1];
+            currentFileType = file.type;
+            runVision();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // --- AI Flow ---
+    
+    // 1. Vision (OCR)
+    async function runVision() {
+        try {
+            const text = await callGeminiAPI(
+                `gemini-3-flash-preview`, 
+                [{text: "Transcribe text/math exactly. Use LaTeX for math."}, {inline_data: {mime_type: currentFileType, data: currentFileBase64}}]
+            );
+            inputEditor.innerHTML = marked.parse(text);
+            statusText.innerText = "讀取完成，請輸入指令或直接開始分析";
+            if(window.MathJax) MathJax.typesetPromise([inputEditor]);
+        } catch(e) { console.error(e); statusText.innerText = "讀取失敗"; }
+    }
+
+    // 2. Expert Analysis (with User Instruction)
+    async function startAIAnalysis() {
+        const content = inputEditor.innerText;
+        const instruction = userInstruction.value;
+        const role = ROLES[roleSelect.value];
+        const lang = document.getElementById('target-lang').value;
+
+        if(!content) return alert("請先上傳內容");
+
+        btnRun.disabled = true;
+        outputEditor.innerHTML = "(專家思考中...)";
+        statusText.innerText = `${role.title} 正在處理您的指令...`;
+
+        try {
+            const prompt = role.prompt(content, lang, instruction);
+            const res = await callGeminiAPI(`gemini-3-pro-preview`, [{text: prompt}]);
+            outputEditor.innerHTML = marked.parse(res);
+            statusText.innerText = "分析完成";
+            if(window.MathJax) MathJax.typesetPromise([outputEditor]);
+            
+            // 自動打開側邊欄，邀請討論
+            if(!sidebar.classList.contains('open')) toggleSidebar();
+            
+        } catch(e) { console.error(e); outputEditor.innerText = "錯誤: " + e.message; }
+        finally { btnRun.disabled = false; }
+    }
+
+    // 3. Chat Assistant (Sidekick)
+    async function sendChat() {
+        const msg = chatInput.value;
+        if(!msg) return;
+        
+        // Add User Msg
+        addChatMsg(msg, 'user');
+        chatInput.value = '';
+
+        // Context Construction
+        const context = `
+            Context:
+            [Source Content]: ${inputEditor.innerText.substring(0, 500)}...
+            [Expert Output]: ${outputEditor.innerText.substring(0, 500)}...
+            
+            User Question: "${msg}"
+            
+            You are a helpful AI Assistant sitting next to the user. 
+            Discuss the expert's output or the source content. Be concise and helpful.
+        `;
+
+        try {
+            // Use Flash for fast chat
+            const res = await callGeminiAPI(`gemini-3-flash-preview`, [{text: context}]);
+            addChatMsg(res, 'ai');
+        } catch(e) { addChatMsg("無法連線...", 'ai'); }
+    }
+
+    function addChatMsg(text, type) {
+        const div = document.createElement('div');
+        div.className = `msg msg-${type}`;
+        div.innerHTML = marked.parse(text); // Support markdown in chat
+        chatArea.appendChild(div);
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    // --- Generic API Caller ---
+    async function callGeminiAPI(model, parts) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${MY_API_KEY}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ contents: [{ parts: parts }] })
+        });
+        const data = await response.json();
+        if(data.error) throw new Error(data.error.message);
+        return data.candidates[0].content.parts[0].text;
+    }
+
+    function copyContent(id) { navigator.clipboard.writeText(document.getElementById(id).innerText); }
+    updateRoleUI();
+</script>
+</body>
+</html>
