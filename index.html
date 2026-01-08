@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini 3 全能 AI 導師 (協作增強版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gemini 3 Omni Tutor</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
@@ -14,197 +14,295 @@
     };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Serif:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --primary: #2c3e50;
             --accent: #8e44ad;
-            --bg: #fdfbf7;
+            --bg: #f4f5f7;
             --surface: #ffffff;
-            --border: #dcdcdc;
+            --border: #e0e0e0;
             --sidebar-width: 350px;
+            --safe-area-bottom: env(safe-area-inset-bottom);
         }
 
         body {
-            font-family: 'Noto Serif TC', 'Songti TC', serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg);
             color: var(--primary);
             margin: 0;
             padding: 0;
             display: flex;
-            height: 100vh;
-            overflow: hidden; /* 防止雙重捲軸 */
+            height: 100vh; /* Fallback */
+            height: 100dvh; /* Dynamic Viewport Height for Mobile */
+            overflow: hidden;
         }
 
-        /* --- 主內容區 --- */
+        /* --- Main Content --- */
         .main-wrapper {
             flex: 1;
-            padding: 30px;
+            padding: 20px;
             overflow-y: auto;
-            transition: margin-right 0.3s ease;
+            -webkit-overflow-scrolling: touch;
+            transition: transform 0.3s ease;
             position: relative;
+            width: 100%;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             background: var(--surface);
-            padding: 30px;
-            border-radius: 8px;
+            padding: 25px;
+            border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            border: 1px solid #e0e0e0;
+            padding-bottom: 80px; /* Space for FAB */
         }
 
-        h1 { margin: 0 0 10px 0; font-weight: 700; letter-spacing: 2px; font-size: 2em; text-align: center; }
-        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 25px; font-family: sans-serif; }
+        h1 { 
+            margin: 0 0 8px 0; 
+            font-weight: 700; 
+            letter-spacing: -0.5px; 
+            font-size: 1.8rem; 
+            text-align: center; 
+            color: #1a1a1a;
+        }
+        
+        .subtitle { 
+            text-align: center; 
+            color: #666; 
+            margin-bottom: 25px; 
+            font-size: 0.9rem;
+        }
 
-        /* --- 1. 極簡化上傳區 --- */
+        /* --- 1. Toolbar --- */
         .toolbar-top {
-            display: flex; gap: 15px; align-items: center; margin-bottom: 20px;
-            background: #f8f9fa; padding: 10px 20px; border-radius: 6px; border: 1px solid #eee;
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+            margin-bottom: 20px;
+            background: #f8f9fa; 
+            padding: 12px; 
+            border-radius: 10px; 
+            border: 1px solid #eee;
+            flex-wrap: wrap;
         }
         
-        .upload-btn-mini {
-            display: flex; align-items: center; gap: 8px;
-            background: #fff; border: 1px solid #ccc; padding: 8px 15px;
-            border-radius: 4px; cursor: pointer; font-weight: bold; font-family: sans-serif;
+        /* Shared button style */
+        .action-btn {
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            gap: 8px;
+            background: #fff; 
+            border: 1px solid #ccc; 
+            padding: 10px 15px;
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 0.9rem;
             transition: all 0.2s;
+            white-space: nowrap;
+            color: #333;
+            font-family: 'Inter', sans-serif;
         }
-        .upload-btn-mini:hover { border-color: var(--accent); color: var(--accent); }
+        .action-btn:active { transform: scale(0.98); background: #f0f0f0; }
+        .action-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-        .settings-row { display: flex; gap: 15px; flex: 1; }
-        select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-weight: 700; flex: 1; }
+        .settings-row { 
+            display: flex; 
+            gap: 10px; 
+            flex: 1; 
+            min-width: 250px;
+        }
         
-        /* --- 2. 第二指令欄位 --- */
+        select { 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            font-size: 0.9rem;
+            flex: 1; 
+            background: white;
+            -webkit-appearance: none;
+        }
+        
+        /* --- 2. Instruction Box --- */
         .instruction-box {
             margin: 20px 0;
             border: 2px solid var(--accent);
-            border-radius: 6px;
+            border-radius: 10px;
             background: #fff;
-            padding: 15px;
+            padding: 15px 15px 10px 15px;
             position: relative;
         }
         .instruction-label {
-            position: absolute; top: -12px; left: 15px;
+            position: absolute; top: -10px; left: 12px;
             background: var(--accent); color: white;
-            padding: 2px 10px; font-size: 0.85em; border-radius: 4px;
-            font-weight: bold; font-family: sans-serif;
+            padding: 2px 8px; font-size: 0.75rem; border-radius: 4px;
+            font-weight: bold; text-transform: uppercase;
         }
         .instruction-input {
             width: 100%; border: none; outline: none;
-            font-size: 1.1em; font-family: sans-serif; resize: none;
+            font-size: 1rem; font-family: inherit; resize: none;
             min-height: 40px; color: #333;
         }
         
-        /* 預覽與狀態 */
+        /* Preview & Status */
         #preview-box { display: none; margin: 10px 0; text-align: center; }
-        #preview-img { max-height: 120px; border-radius: 4px; border: 1px solid #eee; }
-        .status-text { text-align: center; font-weight: bold; color: #666; margin: 10px 0; min-height: 20px; font-family: sans-serif; }
+        #preview-img { max-height: 150px; border-radius: 8px; border: 1px solid #eee; }
+        .status-text { text-align: center; font-weight: 600; color: #666; margin: 10px 0; min-height: 20px; font-size: 0.85rem; }
 
-        /* 雙欄區 */
-        .split-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 600px; }
-        .panel { 
-            border: 1px solid var(--border); border-radius: 6px; display: flex; flex-direction: column; 
-            background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        /* --- Split Container (Responsive) --- */
+        .split-container { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+            height: 600px; 
         }
+
+        .panel { 
+            border: 1px solid var(--border); border-radius: 10px; 
+            display: flex; flex-direction: column; 
+            background: #fff; overflow: hidden;
+        }
+        
         .panel-header {
             padding: 10px 15px; background: #fcfcfc; border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center; font-family: sans-serif;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.85rem; font-weight: 700; color: #555;
+            text-transform: uppercase;
         }
-        .panel-title { font-weight: bold; font-size: 1em; color: #444; }
+        
         .editor {
-            flex: 1; padding: 25px; overflow-y: auto; outline: none;
-            font-size: 19px; line-height: 1.8; color: #2c3e50;
+            flex: 1; padding: 20px; overflow-y: auto; outline: none;
+            font-family: 'Noto Serif', serif; font-size: 1rem; line-height: 1.7; color: #2c3e50;
+        }
+        
+        /* Placeholder for contentEditable */
+        .editor:empty:before {
+            content: 'Type or paste your content here...';
+            color: #aaa;
+            font-style: italic;
+            pointer-events: none;
         }
 
-        /* 視覺樣式 */
-        .editor h3 { color: var(--accent); font-size: 1.2em; border-bottom: 1px solid #eee; margin-top: 25px; font-weight: 700; }
-        .editor h3::before { content: '✦ '; }
-        .editor blockquote { border-left: 4px solid var(--accent); background: #f9f9f9; padding: 15px; margin: 15px 0; font-style: normal; }
-        .editor strong { color: #c0392b; font-weight: 700; }
+        /* Editor Visuals */
+        .editor h3 { color: var(--accent); font-size: 1.1em; border-bottom: 1px solid #eee; margin-top: 20px; font-weight: 700; }
+        .editor blockquote { border-left: 3px solid var(--accent); background: #f9f9f9; padding: 10px 15px; margin: 15px 0; color: #555; }
 
-        /* 按鈕 */
+        /* Action Button */
         .btn-big {
-            width: 100%; padding: 12px; background: var(--accent); color: white; border: none;
-            border-radius: 4px; font-size: 1.1em; font-weight: bold; cursor: pointer;
-            margin-top: 10px; font-family: sans-serif;
+            width: 100%; padding: 14px; background: var(--accent); color: white; border: none;
+            border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
         }
-        .btn-big:hover { opacity: 0.9; }
+        .btn-big:active { transform: scale(0.98); opacity: 0.9; }
 
-        /* --- 3. AI 側邊欄 (Sidebar) --- */
+        /* --- 3. Sidebar (Chat) --- */
         .sidebar {
-            position: fixed; top: 0; right: -360px; /* 預設隱藏 */
-            width: var(--sidebar-width); height: 100%;
+            position: fixed; top: 0; right: -100%; /* Hidden */
+            width: 100%; /* Full width on mobile default */
+            max-width: var(--sidebar-width);
+            height: 100%;
             background: #fff; border-left: 1px solid #ddd;
-            box-shadow: -5px 0 15px rgba(0,0,0,0.05);
+            box-shadow: -5px 0 25px rgba(0,0,0,0.1);
             display: flex; flex-direction: column;
-            transition: right 0.3s ease;
-            z-index: 1000;
+            transition: right 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 2000;
         }
         .sidebar.open { right: 0; }
         
         .sidebar-header {
             padding: 15px; background: var(--accent); color: white; font-weight: bold;
-            display: flex; justify-content: space-between; align-items: center; font-family: sans-serif;
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: max(15px, env(safe-area-inset-top)); /* Notch Support */
         }
         .chat-area {
             flex: 1; padding: 15px; overflow-y: auto; background: #f4f6f7;
-            display: flex; flex-direction: column; gap: 10px;
+            display: flex; flex-direction: column; gap: 12px;
         }
         .chat-input-area {
             padding: 15px; border-top: 1px solid #eee; background: #fff; display: flex; gap: 10px;
+            padding-bottom: max(15px, var(--safe-area-bottom));
         }
         .chat-input {
-            flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; font-family: sans-serif;
+            flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 25px; outline: none; font-size: 1rem;
+            -webkit-appearance: none;
         }
         .chat-send-btn {
-            background: var(--accent); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer;
+            background: var(--accent); color: white; border: none; border-radius: 50%; width: 44px; height: 44px; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
         }
 
-        /* 聊天氣泡 */
-        .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.95em; line-height: 1.5; font-family: sans-serif; }
-        .msg-ai { align-self: flex-start; background: #fff; border: 1px solid #e0e0e0; color: #333; }
-        .msg-user { align-self: flex-end; background: var(--accent); color: white; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 0.95em; line-height: 1.5; }
+        .msg-ai { align-self: flex-start; background: #fff; border: 1px solid #e0e0e0; color: #333; border-bottom-left-radius: 4px; }
+        .msg-user { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         
-        /* 側邊欄開關按鈕 */
+        /* Floating Toggle Button */
         .sidebar-toggle {
-            position: fixed; bottom: 30px; right: 30px;
-            width: 60px; height: 60px; border-radius: 50%;
+            position: fixed; bottom: 30px; right: 25px;
+            width: 56px; height: 56px; border-radius: 50%;
             background: var(--accent); color: white;
             display: flex; justify-content: center; align-items: center;
-            font-size: 30px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 1001; transition: transform 0.2s;
+            font-size: 24px; cursor: pointer; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            z-index: 1500; transition: transform 0.2s;
+            bottom: max(30px, calc(var(--safe-area-bottom) + 10px));
         }
-        .sidebar-toggle:hover { transform: scale(1.1); }
+        .sidebar-toggle:active { transform: scale(0.9); }
 
+        /* --- Mobile Responsive Tweaks --- */
+        @media (max-width: 768px) {
+            .container { padding: 15px; padding-bottom: 90px; border-radius: 0; min-height: 100vh; box-shadow: none; }
+            .split-container { 
+                grid-template-columns: 1fr; /* Stack panels */
+                height: auto; 
+                gap: 25px;
+            }
+            .panel { min-height: 300px; }
+            .toolbar-top { flex-direction: column; align-items: stretch; }
+            /* Align buttons in a row for mobile */
+            .toolbar-buttons { display: flex; gap: 10px; }
+            .action-btn { flex: 1; }
+            
+            h1 { font-size: 1.5rem; margin-top: 10px; }
+            .sidebar { max-width: 100%; } /* Full screen chat on mobile */
+        }
     </style>
 </head>
 <body>
 
 <div class="main-wrapper" id="main-wrapper">
     <div class="container">
-        <h1>Gemini 3 全能 AI 導師</h1>
-        <div class="subtitle">協作模式：上傳 ➔ 指令微調 ➔ 專家解析 ➔ 助手討論</div>
+        <h1>Gemini 3 Omni Tutor</h1>
+        <div class="subtitle">Collaboration: Upload ➔ Instruction ➔ Analysis ➔ Chat</div>
 
         <div class="toolbar-top">
-            <label class="upload-btn-mini">
-                <span>📁 上傳圖片</span>
-                <input type="file" id="file-input" accept="image/*" style="display:none">
-            </label>
+            <div class="toolbar-buttons" style="display: flex; gap: 10px;">
+                <label class="action-btn">
+                    <span>📁 Upload Image</span>
+                    <input type="file" id="file-input" accept="image/*" style="display:none">
+                </label>
+                <button class="action-btn" onclick="startTextInput()">
+                    <span>✍️ Type Text</span>
+                </button>
+            </div>
             
             <div class="settings-row">
                 <select id="role-select" onchange="updateRoleUI()">
-                    <option value="translator">📝 筆譯專家</option>
-                    <option value="interpreter">🗣️ 口譯專家</option>
-                    <option value="math">📐 數學家教</option>
-                    <option value="toefl">🎓 TOEFL 老師</option>
-                    <option value="psych">🧠 心理學教授</option>
-                    <option value="coder">💻 程式導師</option>
+                    <option value="translator">📝 Translator</option>
+                    <option value="interpreter">🗣️ Interpreter</option>
+                    <option value="math">📐 Math Tutor</option>
+                    <option value="toefl">🎓 TOEFL Coach</option>
+                    <option value="psych">🧠 Psych Prof.</option>
+                    <option value="coder">💻 Code Mentor</option>
                 </select>
                 <select id="target-lang">
-                    <option value="Traditional Chinese (Taiwan)">繁體中文 (台灣)</option>
                     <option value="English">English</option>
+                    <option value="Traditional Chinese (Taiwan)">Traditional Chinese</option>
                     <option value="Japanese">Japanese</option>
                 </select>
             </div>
@@ -213,24 +311,24 @@
         <div id="preview-box"><img id="preview-img"></div>
 
         <div class="instruction-box">
-            <div class="instruction-label">✨ 第二指令 (對專家的額外要求)</div>
-            <textarea id="user-instruction" class="instruction-input" placeholder="例如：請用更幽默的語氣、請把這段翻譯成台語、請解釋這公式的歷史背景..." rows="1"></textarea>
+            <div class="instruction-label">✨ Extra Instruction</div>
+            <textarea id="user-instruction" class="instruction-input" placeholder="e.g. Explain like I'm 5, make it professional..." rows="1"></textarea>
         </div>
 
-        <button id="btn-run" class="btn-big" onclick="startAIAnalysis()">開始專家分析</button>
+        <button id="btn-run" class="btn-big" onclick="startAIAnalysis()">Start Analysis</button>
         <div id="status-text" class="status-text"></div>
 
         <div class="split-container">
             <div class="panel">
                 <div class="panel-header">
-                    <span class="panel-title">原始內容</span>
-                    <button onclick="document.getElementById('input-editor').focus()" style="border:none;background:none;cursor:pointer;">✎</button>
+                    <span class="panel-title">Original Input</span>
+                    <button onclick="startTextInput()" style="border:none;background:none;cursor:pointer;">✎</button>
                 </div>
                 <div id="input-editor" class="editor tex2jax_process" contenteditable="true"></div>
             </div>
             <div class="panel">
                 <div class="panel-header">
-                    <span class="panel-title" id="expert-title">專家輸出</span>
+                    <span class="panel-title" id="expert-title">Expert Output</span>
                     <button onclick="copyContent('output-editor')" style="border:none;background:none;cursor:pointer;">📋</button>
                 </div>
                 <div id="output-editor" class="editor tex2jax_process" contenteditable="true"></div>
@@ -241,14 +339,14 @@
 
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-        <span>🤖 AI 協作助手</span>
-        <span onclick="toggleSidebar()" style="cursor:pointer;">✕</span>
+        <span>🤖 AI Assistant</span>
+        <span onclick="toggleSidebar()" style="cursor:pointer; font-size:1.2rem; padding: 0 10px;">✕</span>
     </div>
     <div class="chat-area" id="chat-area">
-        <div class="msg msg-ai">你好！我是你的協作助手。我已經讀過左邊的內容和右邊的專家回答了。有什麼想討論的嗎？</div>
+        <div class="msg msg-ai">Hi! I'm your assistant. I've analyzed the content. What would you like to discuss?</div>
     </div>
     <div class="chat-input-area">
-        <input type="text" id="chat-input" class="chat-input" placeholder="問問小助手..." onkeypress="if(event.key==='Enter') sendChat()">
+        <input type="text" id="chat-input" class="chat-input" placeholder="Ask me anything..." onkeypress="if(event.key==='Enter') sendChat()">
         <button class="chat-send-btn" onclick="sendChat()">➤</button>
     </div>
 </div>
@@ -260,54 +358,70 @@
     const MY_API_KEY = "AIzaSyARnOyCalravUFD_FuZoVtZAFOmG5hLLSQ"; 
     // ==========================================
 
-    // --- 角色定義 (支援第二指令) ---
+    // --- Role Definitions (Localized to English, Enforcing English Output) ---
     const ROLES = {
         translator: {
-            title: "筆譯專家", color: "#27ae60",
+            title: "Expert Translator", color: "#27ae60",
             prompt: (content, lang, instruction) => `
-                你是一位資深筆譯。母語：${lang}。
-                來源內容: "${content}"
+                You are a Senior Translator. Native language: ${lang}.
+                Source Content: "${content}"
                 
-                **使用者額外指令**: "${instruction || '無'}" (請務必優先遵守此指令)
+                **User Instruction**: "${instruction || 'None'}" (Prioritize this instruction)
 
-                請以 Markdown 回應：
-                ### 專家視角
-                > (分析原文與使用者指令，說明策略)
-                ### 譯文產出
-                (高品質翻譯)
-                ### 譯註
+                **CRITICAL:** OUTPUT MUST BE IN ENGLISH (unless the instruction specifically asks for the target language text only, the explanation must be English).
+
+                Please respond in Markdown:
+                ### Strategy
+                > (Analyze source and tone in English)
+                ### Translation
+                (High-quality translation into ${lang})
+                ### Notes
+                (Cultural notes or grammar points in English)
             `
         },
         interpreter: {
-            title: "口譯專家", color: "#16a085",
+            title: "Interpreter", color: "#16a085",
             prompt: (content, lang, instruction) => `
-                你是一位同步口譯員。母語：${lang}。
-                來源: "${content}"
-                **使用者指令**: "${instruction || '無'}"
+                You are a Simultaneous Interpreter.
+                Source: "${content}"
+                **Instruction**: "${instruction || 'None'}"
                 
-                請以 Markdown 回應：
-                ### 口譯筆記
-                > (分析語氣、速度與策略)
-                ### 口語輸出
-                (模擬現場口譯)
+                **CRITICAL:** EXPLAIN IN ENGLISH.
+                
+                Respond in Markdown:
+                ### Interpreter Notes
+                > (Analysis of tone, speed, and strategy in English)
+                ### Verbal Output
+                (Simulated spoken output in ${lang})
             `
         },
         math: {
-            title: "數學家教", color: "#e67e22",
+            title: "Math Tutor", color: "#e67e22",
             prompt: (content, lang, instruction) => `
-                Math Tutor (${lang}). Problem: "${content}"
-                **User Instruction**: "${instruction || 'None'}"
+                You are an Expert Math Tutor. Problem: "${content}"
+                **Instruction**: "${instruction || 'None'}"
+                
+                **CRITICAL:** EXPLAIN IN ENGLISH.
                 
                 Markdown Response:
                 ### Insight
-                > (Geeky analysis)
+                > (Deep analysis of the concept in English)
                 ### Solution
-                (LaTeX steps)
+                (Step-by-step solution using LaTeX for math)
             `
         },
-        toefl: { title: "TOEFL 老師", color: "#c0392b", prompt: (c, l, i) => `TOEFL Expert (${l}). Input: "${c}". **Instruction**: "${i}". Provide critique and rewrite.` },
-        psych: { title: "心理學教授", color: "#8e44ad", prompt: (c, l, i) => `Psychology Prof (${l}). Input: "${c}". **Instruction**: "${i}". Analyze deeply.` },
-        coder: { title: "程式導師", color: "#2980b9", prompt: (c, l, i) => `Senior Dev (${l}). Input: "${c}". **Instruction**: "${i}". Review and fix.` }
+        toefl: { 
+            title: "TOEFL Coach", color: "#c0392b", 
+            prompt: (c, l, i) => `TOEFL Expert. Input: "${c}". **Instruction**: "${i}". Provide critique and rewrite. **OUTPUT IN ENGLISH**.` 
+        },
+        psych: { 
+            title: "Psychology Prof.", color: "#8e44ad", 
+            prompt: (c, l, i) => `Psychology Professor. Input: "${c}". **Instruction**: "${i}". Analyze deeply. **OUTPUT IN ENGLISH**.` 
+        },
+        coder: { 
+            title: "Code Mentor", color: "#2980b9", 
+            prompt: (c, l, i) => `Senior Developer. Input: "${c}". **Instruction**: "${i}". Review code, fix bugs, and explain logic. **OUTPUT IN ENGLISH**.` 
+        }
     };
 
     // DOM Elements
@@ -331,27 +445,49 @@
     function updateRoleUI() {
         const role = ROLES[roleSelect.value];
         document.documentElement.style.setProperty('--accent', role.color);
-        document.getElementById('expert-title').innerText = role.title + " 輸出";
+        document.getElementById('expert-title').innerText = role.title;
     }
 
     function toggleSidebar() {
         sidebar.classList.toggle('open');
-        const main = document.getElementById('main-wrapper');
-        main.style.marginRight = sidebar.classList.contains('open') ? '350px' : '0';
+        if (window.innerWidth > 768) {
+            const main = document.getElementById('main-wrapper');
+            main.style.marginRight = sidebar.classList.contains('open') ? '350px' : '0';
+        }
     }
 
-    // --- File Handling ---
+    // --- Input Handling ---
+    
+    // Explicit Text Input Mode
+    function startTextInput() {
+        // Clear image if exists
+        fileInput.value = '';
+        currentFileBase64 = null;
+        previewBox.style.display = 'none';
+        
+        // Scroll to editor and focus
+        inputEditor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        inputEditor.focus();
+        statusText.innerText = "Mode: Text Input";
+    }
+
     fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
     document.addEventListener('paste', e => {
+        // Handle file paste
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (let item of items) { if (item.kind === 'file') handleFile(item.getAsFile()); }
+        for (let item of items) { 
+            if (item.kind === 'file') {
+                e.preventDefault(); 
+                handleFile(item.getAsFile()); 
+            }
+        }
     });
 
     function handleFile(file) {
         if(!file) return;
         previewImg.src = URL.createObjectURL(file);
         previewBox.style.display = 'block';
-        statusText.innerText = "讀取中...";
+        statusText.innerText = "Processing image...";
         
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -372,9 +508,9 @@
                 [{text: "Transcribe text/math exactly. Use LaTeX for math."}, {inline_data: {mime_type: currentFileType, data: currentFileBase64}}]
             );
             inputEditor.innerHTML = marked.parse(text);
-            statusText.innerText = "讀取完成，請輸入指令或直接開始分析";
+            statusText.innerText = "Read complete. Enter instruction or Start Analysis.";
             if(window.MathJax) MathJax.typesetPromise([inputEditor]);
-        } catch(e) { console.error(e); statusText.innerText = "讀取失敗"; }
+        } catch(e) { console.error(e); statusText.innerText = "Read failed."; }
     }
 
     // 2. Expert Analysis (with User Instruction)
@@ -384,23 +520,27 @@
         const role = ROLES[roleSelect.value];
         const lang = document.getElementById('target-lang').value;
 
-        if(!content) return alert("請先上傳內容");
+        if(!content) {
+            // Shake effect or alert
+            startTextInput();
+            return statusText.innerText = "⚠️ Please type text or upload an image first.";
+        }
 
         btnRun.disabled = true;
-        outputEditor.innerHTML = "(專家思考中...)";
-        statusText.innerText = `${role.title} 正在處理您的指令...`;
+        outputEditor.innerHTML = "(Expert is thinking...)";
+        statusText.innerText = `${role.title} is processing...`;
 
         try {
             const prompt = role.prompt(content, lang, instruction);
             const res = await callGeminiAPI(`gemini-3-pro-preview`, [{text: prompt}]);
             outputEditor.innerHTML = marked.parse(res);
-            statusText.innerText = "分析完成";
+            statusText.innerText = "Analysis Complete";
             if(window.MathJax) MathJax.typesetPromise([outputEditor]);
             
-            // 自動打開側邊欄，邀請討論
-            if(!sidebar.classList.contains('open')) toggleSidebar();
+            if(!sidebar.classList.contains('open') && window.innerWidth > 768) toggleSidebar();
+            if(window.innerWidth <= 768) statusText.innerText = "Done! Check the result or open chat 💬";
             
-        } catch(e) { console.error(e); outputEditor.innerText = "錯誤: " + e.message; }
+        } catch(e) { console.error(e); outputEditor.innerText = "Error: " + e.message; }
         finally { btnRun.disabled = false; }
     }
 
@@ -422,14 +562,15 @@
             User Question: "${msg}"
             
             You are a helpful AI Assistant sitting next to the user. 
-            Discuss the expert's output or the source content. Be concise and helpful.
+            Discuss the expert's output or the source content. 
+            **CRITICAL: ALWAYS REPLY IN ENGLISH.**
+            Be concise and helpful.
         `;
 
         try {
-            // Use Flash for fast chat
             const res = await callGeminiAPI(`gemini-3-flash-preview`, [{text: context}]);
             addChatMsg(res, 'ai');
-        } catch(e) { addChatMsg("無法連線...", 'ai'); }
+        } catch(e) { addChatMsg("Connection failed...", 'ai'); }
     }
 
     function addChatMsg(text, type) {
